@@ -14,9 +14,9 @@ $$\Theta_{\text{Call}} = -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} - rKe^{
 ---
 ## Multi-Regime Volatility Shock Architecture
 To stress-test capital decay, the engine models three independent macroeconomic volatility tracks:
-*   **Baseline Regime (Blue Dash):** Uses the actual, raw forward-looking Implied Volatility $(\sigma_{\text{base}}\)$ extracted from PostgreSQL.
+*   **Baseline Regime (Blue Dash):** Uses the actual, raw forward-looking Implied Volatility $\(\sigma_{\text{base}}\)$ extracted from PostgreSQL.
 *   **Volatility Compression Regime (Green Dot):** Simulates an absolute contraction $(\sigma_{\text{base}} - 5\%)$ representing a post-earnings "volatility crush."
-*   **Macro Volatility Shock Regime (Red Solid):** Simulates an extreme systematic panic shock $(\sigma_{\text{base}} + 15\%)$ representing a geopolitical black swan event.
+*   **Macro Volatility Shock Regime (Red Solid):** Simulates an extreme systematic panic shock $\(\sigma_{\text{base}} + 15\%)$ representing a geopolitical black swan event.
 
 ## The Expiration Singularity: Handling Boundary Anomalies
 
