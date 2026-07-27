@@ -1,6 +1,6 @@
 # Continuous Time Decay & The Expiration Singularity (Theta Optimization)
 
-A quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract over its remaining lifespan.
+A quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract for QQQ over its remaining lifespan. The engine uses an SQL query that joins option chains with stock prices to locate a valid near-term contract. It filters for an option with ~30 days left that is closest to being At-The-Money (ATM).
 
 ## Methodology & Financial Calculus
 
