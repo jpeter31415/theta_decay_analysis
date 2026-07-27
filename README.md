@@ -42,7 +42,7 @@ clean_plot_df = decay_df[decay_df['Days_To_Expiration'] > 0]
 ## Insights
 <img width="3600" height="1950" alt="theta_decay_shock_dashboard" src="https://github.com/user-attachments/assets/31bf0335-6e66-4880-85d7-c819a52362cb" />
 
-This visual curve provides concrete, rule-based execution logic for derivatives portfolios:
+This visual provides concrete, rule-based execution logic for derivatives portfolios:
 
 1.  **The Option Buyer's Cliff (Exit Rules):** The decay trajectory is relatively flat from Day 90 down to Day 45. However, at **45 days to expiration**, the curve hits an inflection point and accelerates exponentially. Options buyers must systematically close or roll long positions before this 45-day threshold to avoid severe capital drag.
 2.  **The Option Seller's Sweet Spot (Entry Rules):** Symmetrical to the buyer's risk, net-sellers of premium maximize their mathematical edge by entering short positions inside the **45-day to 15-day window**. This range harvests the steepest portion of the decay curve while closing out before terminal settlement risks multiply.
