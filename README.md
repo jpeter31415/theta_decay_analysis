@@ -12,7 +12,7 @@ $$\Theta_{\text{Call}} = -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} - rKe^{
 *   **Vector Scaling:** While the raw calculus evaluates decay across a full annualized year (T=1.0), this pipeline applies a localized divisor ($\theta$ / 365.0) to scale the output down to an operationally useful 24-hour calendar tracking unit.
 
 ---
-## 2. Multi-Regime Volatility Shock Architecture
+## Multi-Regime Volatility Shock Architecture
 Options risk parameters do not move in a vacuum. To stress-test capital decay, the engine models three independent macroeconomic volatility tracks:
 *   **Database Baseline Regime (Grey Dash):** Uses the actual, raw forward-looking Implied Volatility (\(\sigma_{\text{base}}\)) extracted from the PostgreSQL cluster.
 *   **Volatility Compression Regime (Blue Dot):** Simulates an absolute contraction (\(\sigma_{\text{base}} - 5\%\)) representing a post-earnings "volatility crush."
