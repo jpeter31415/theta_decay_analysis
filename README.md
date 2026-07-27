@@ -1,9 +1,9 @@
 # theta_decay_analysis
-# 📉 Continuous Time Decay & The Expiration Singularity (Theta Optimization)
+# Continuous Time Decay & The Expiration Singularity (Theta Optimization)
 
-A lightweight quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract over its 90-day lifespan.
+A quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract over its remaining lifespan.
 
-## 📈 Methodology & Financial Calculus
+## Methodology & Financial Calculus
 
 The engine solves the continuous partial derivative of the Black-Scholes-Merton (BSM) equation with respect to time (T):
 
@@ -13,20 +13,20 @@ The engine solves the continuous partial derivative of the Black-Scholes-Merton 
 
 ---
 
-## 🛑 The Expiration Singularity: Handling Boundary Anomalies
+## The Expiration Singularity: Handling Boundary Anomalies
 
-When plotting the complete multi-month horizon down to zero days remaining, the resulting chart produces an aggressive, near-vertical terminal spike directly at the expiration boundary (T → 0). 
+When plotting the complete horizon down to zero days remaining, the resulting chart produces an aggressive, near-vertical terminal spike directly at the expiration boundary (T → 0). 
 
 ### 1. The Mathematical Rationale
 This dramatic curve behavior is mathematically correct. Look at the primary term of the numerator:
 \[\lim_{T \to 0} \left( -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} \right) = -\infty\]
-Because the annualized time vector (T) sits inside a square root in the denominator, dividing any constant by a value approaching zero forces the limit to explode toward negative infinity.
+Because the annualized time vector (T) sits inside a square root in the denominator, dividing any constant by a value approaching zero forces the limit to blow up to infinity.
 
 ### 2. The Trading Intuition
 An At-The-Money contract sits exactly on the strike price knife-edge. On its final trading session, its remaining extrinsic "time value" collapses completely in a matter of hours. The option's pricing distribution behaves like a delta function—the slightest tick dictates whether the contract expires fully preserved or completely worthless.
 
 ### 3. Data Engineering Resolution
-While mathematically accurate, this terminal infinity spike skews the vertical visual scale, flattening the critical trajectory details between Day 90 and Day 10. To preserve actionable chart readability for hiring managers, the Python visualization layer implements a data quality gate:
+While mathematically accurate, this terminal infinity spike skews the vertical visual scale, flattening the critical trajectory details. To preserve chart readability, the Python visualization layer implements a data quality gate:
 ```python
 # Filters out the final terminal step (Day 0) to maintain uniform axis scaling
 clean_plot_df = decay_df[decay_df['Days_To_Expiration'] > 0]
@@ -34,7 +34,7 @@ clean_plot_df = decay_df[decay_df['Days_To_Expiration'] > 0]
 
 ---
 
-## 📊 Actionable Portfolio Insights
+## Insights
 
 This visual curve provides concrete, rule-based execution logic for derivatives portfolios:
 
