@@ -1,4 +1,3 @@
-# theta_decay_analysis
 # Continuous Time Decay & The Expiration Singularity (Theta Optimization)
 
 A quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract over its remaining lifespan.
