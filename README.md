@@ -19,7 +19,7 @@ When plotting the complete horizon down to zero days remaining, the resulting ch
 
 ### 1. The Mathematical Rationale
 This dramatic curve behavior is mathematically correct. Look at the primary term of the numerator:
-\[\lim_{T \to 0} \left( -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} \right) = -\infty\]
+$$\lim_{T \to 0} \left( -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} \right) = -\infty$$
 Because the annualized time vector (T) sits inside a square root in the denominator, dividing any constant by a value approaching zero forces the limit to blow up to infinity.
 
 ### 2. The Trading Intuition
