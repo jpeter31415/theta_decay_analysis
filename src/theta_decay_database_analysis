@@ -1,0 +1,185 @@
+import os
+import logging
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+from sqlalchemy import create_engine
+
+#========================================
+#setup, logging, and database connection
+#========================================
+
+#logging setup
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+    )
+
+#database credentials
+db_user = os.getenv('db_user', 'postgres')
+db_password = os.getenv('db_password', 'postgres')
+db_host = os.getenv('db_host', 'localhost')
+db_port = os.getenv('db_port', '5432')
+db_name = os.getenv('db_name','options_analytics')
+
+#create connection engine for PSQL
+engine = create_engine(f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}')
+
+#==========================
+#Black-Scholes theta module
+#==========================
+
+def calculate_option_theta(S: float, K: float, T: float, r: float, sigma: float) -> float:
+    """Calculates the exact daily Theta (time decay) for an ATM/near-the-money Call option."""
+    if T <= 0: 
+        return 0.0
+        
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    annualized_theta = (- (S * norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - r * K * np.exp(-r * T) * norm.cdf(d2))
+    return annualized_theta / 365.0
+
+#=================================
+#live database extraction pipeline
+#=================================
+
+def run_database_decay_simulation(ticker: str, risk_free_rate: float = 0.04):
+    """
+    Pulls a real option contract from the options_analytics database,
+    extracts the market spot price, and runs a lifespan decay path.
+    """
+    logging.info(f'Querying database for active near-the-money contracts for {ticker}')
+    
+    #this query joins option chains with stock prices to locate a valid near-term contract.
+    #it filters for an option with ~30 days left that is closest to being At The Money (ATM).
+    query = """
+        SELECT 
+            o.contract_symbol, 
+            o.data_date, 
+            o.expiration_date, 
+            o.strike_price, 
+            o.option_type, 
+            o.implied_volatility,
+            (
+                SELECT t.adj_close_price 
+                FROM ticker_prices t
+                WHERE t.ticker = o.ticker
+                    AND t.date <= o.data_date
+                ORDER BY t.date DESC
+                LIMIT 1
+            ) AS live_spot_price
+        FROM option_market_data o
+        WHERE o.ticker = %(ticker)s
+          AND o.option_type = 'CALL'
+          AND (o.expiration_date::date - o.data_date::date) BETWEEN 25 AND 45
+        ORDER BY ABS(o.strike_price - (
+            SELECT t.adj_close_price 
+            FROM ticker_prices t 
+            WHERE t.ticker = o.ticker 
+                AND t.date <= o.data_date 
+            ORDER BY t.date DESC 
+            LIMIT 1
+        )) ASC
+        LIMIT 1;
+    """
+    
+    try:
+        contract_df = pd.read_sql(query, con=engine, params={'ticker': ticker})
+        
+        if contract_df.empty:
+            logging.error(f'No valid contracts matching the filter located for {ticker}')
+            return
+            
+        # Unpack the real database variables from query row
+        contract = contract_df.iloc[0] #name the row 'contract'
+        contract_symbol = contract['contract_symbol']
+        strike_price = float(contract['strike_price'])
+        base_iv = float(contract['implied_volatility'])
+        live_spot = float(contract['live_spot_price'])
+        
+        t = pd.to_datetime(contract['data_date'])
+        T = pd.to_datetime(contract['expiration_date'])
+        total_lifespan_days = (T - t).days
+        
+        logging.info(f'[SUCCESS] Isolated contract: {contract_symbol}')
+        logging.info(f'Market Spot: ${live_spot:.2f} | Strike: ${strike_price:.2f} | Base Implied Vol: {base_iv*100:.2f}%')
+        logging.info(f'Simulating a {total_lifespan_days}-day multi-regime volatility shock path')
+
+        decay_data = []
+
+        #loop backward through the lifespan of the contract down to 0 days remaining
+        for days_left in range(total_lifespan_days, -1, -1):
+            time_to_maturity = days_left / 365.0
+            
+            #baseline scenario
+            theta_base = calculate_option_theta(
+                S=live_spot, K=strike_price, T=time_to_maturity, r=risk_free_rate, sigma=base_iv
+            )
+            
+            #volatility contraction
+            theta_crush = calculate_option_theta(
+                S=live_spot, K=strike_price, T=time_to_maturity, r=risk_free_rate, sigma=max(0.02, base_iv-0.05)
+            )
+            
+            #macro shock
+            theta_shock = calculate_option_theta(
+                S=live_spot, K=strike_price, T=time_to_maturity, r=risk_free_rate, sigma=base_iv + 0.15
+            )
+            
+            decay_data.append({
+                'Days_To_Expiration': days_left,
+                'Theta_Baseline': theta_base,
+                'Theta_Crush': theta_crush,
+                'Theta_Shock': theta_shock
+            })
+
+        decay_df = pd.DataFrame(decay_data)
+        generate_dashboard_plot(decay_df, contract_symbol, base_iv)
+
+    except Exception as pipeline_error:
+        logging.critical(f'Database decay pipeline failed: {pipeline_error}')
+        raise
+        
+#=============
+#visualization
+#=============
+
+def generate_dashboard_plot(decay_df: pd.DataFrame, contract_name: str, base_iv: float):
+    """Formats and exports the multi-line volatility shock dashboard."""
+    plt.figure(figsize=(12, 6.5))
+    
+    #filter out the Day 0 infinity spike across all vectors
+    clean_plot_df = decay_df[decay_df['Days_To_Expiration'] > 0]
+    
+    #plot the 3 distinct volatility regime tracks
+    plt.plot(clean_plot_df['Days_To_Expiration'], clean_plot_df['Theta_Shock'], 
+             label=f'Macro Volatility Shock Regime (IV: {(base_iv+0.15)*100:.1f}%)', color='red', lw=2)
+             
+    plt.plot(clean_plot_df['Days_To_Expiration'], clean_plot_df['Theta_Baseline'], 
+             label=f'Database Baseline Regime (IV: {base_iv*100:.1f}%)', color='blue', lw=1.8, linestyle='--')
+             
+    plt.plot(clean_plot_df['Days_To_Expiration'], clean_plot_df['Theta_Crush'], 
+             label=f'Volatility Compression Regime (IV: {max(0.02, base_iv-0.05)*100:.1f}%)', color='green', lw=1.5, linestyle=':')
+
+    #invert x-axis to visually track time moving forward toward expiration
+    plt.gca().invert_xaxis()  
+    
+    plt.title(f'Volatility Stress-Testing Framework: Dynamic Theta Capital Decay Lifespan\nContract: {contract_name}', fontweight='bold', fontsize=13)
+    plt.ylabel('Daily Dollar Value Lost per Contract ($)', fontsize=11)
+    plt.xlabel('Days Remaining Until Contract Expiration', fontsize=11)
+    plt.legend(loc='lower left', frameon=True, fontsize=10)
+    plt.grid(True, linestyle=":", alpha=0.6)
+    plt.tight_layout()
+    
+    os.makedirs('images', exist_ok=True)
+    plt.savefig('images/theta_decay_shock_dashboard.png', dpi=300)
+    logging.info('[SUCCESS] Multi-regime shock chart successfully exported to images/theta_decay_shock_dashboard.png')
+    plt.show()
+
+#==========
+# execution
+#==========
+if __name__ == '__main__':
+    run_database_decay_simulation('QQQ')
