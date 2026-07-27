@@ -9,7 +9,7 @@ The engine solves the continuous partial derivative of the Black-Scholes-Merton 
 
 \[\Theta_{\text{Call}} = -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} - r \cdot K \cdot e^{-rT} \cdot N(d_2)\]
 
-*   **Vector Scaling:** While the raw calculus evaluates decay across a full annualized year (T=1.0), this pipeline applies a localized divisor (Θ / 365.0) to scale the output down to an operationally useful 24-hour calendar tracking unit.
+*   **Vector Scaling:** While the raw calculus evaluates decay across a full annualized year (T=1.0), this pipeline applies a localized divisor ($\theta$ / 365.0) to scale the output down to an operationally useful 24-hour calendar tracking unit.
 
 ---
 
