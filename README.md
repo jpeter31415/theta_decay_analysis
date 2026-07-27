@@ -35,6 +35,7 @@ clean_plot_df = decay_df[decay_df['Days_To_Expiration'] > 0]
 ---
 
 ## Insights
+<img width="3600" height="1950" alt="theta_decay_shock_dashboard" src="https://github.com/user-attachments/assets/31bf0335-6e66-4880-85d7-c819a52362cb" />
 
 This visual curve provides concrete, rule-based execution logic for derivatives portfolios:
 
