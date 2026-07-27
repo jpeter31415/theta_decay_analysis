@@ -8,12 +8,12 @@ The engine solves the continuous partial derivative of the Black-Scholes-Merton 
 
 $$\Theta_{\text{Call}} = -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} - rKe^{-rT} \cdot N(d_2)$$
 
-*   **Vector Scaling:** While the raw calculus evaluates decay across a full annualized year (T=1.0), this pipeline applies a localized divisor ($\theta$ / 365.0) to scale the output down to an operationally useful 24-hour calendar tracking unit.
+*   **Vector Scaling:** While the raw calculus evaluates decay across a full year (T=1.0), this pipeline applies a divisor ($\theta$ / 365.0) to scale the output down to an operationally useful 24-hour tracking unit.
 
 ---
 ## Multi-Regime Volatility Shock Architecture
 To stress-test capital decay, the engine models three independent macroeconomic volatility tracks:
-*   **Baseline Regime (Blue Dash):** Uses the actual, raw forward-looking Implied Volatility $\(\sigma_{\text{base}}\)$ extracted from PostgreSQL.
+*   **Baseline Regime (Blue Dash):** Uses the actual, raw Implied Volatility $\(\sigma_{\text{base}}\)$ extracted from PostgreSQL.
 *   **Volatility Compression Regime (Green Dot):** Simulates an absolute contraction $\(\sigma_{\text{base}} - 5\\%\)$ representing a post-earnings "volatility crush."
 *   **Macro Volatility Shock Regime (Red Solid):** Simulates an extreme systematic panic shock $\(\sigma_{\text{base}} + 15\\%)$ representing a geopolitical black swan event.
 
@@ -22,12 +22,12 @@ To stress-test capital decay, the engine models three independent macroeconomic 
 When plotting the complete horizon down to zero days remaining, the resulting chart produces an aggressive, near-vertical terminal spike directly at the expiration boundary (T → 0). 
 
 ### 1. The Mathematical Rationale
-This dramatic curve behavior is mathematically correct. Look at the primary term of the numerator:
+This dramatic curve behavior is mathematically correct:
 $$\lim_{T \to 0} \left( -\frac{S \cdot n(d_1) \cdot \sigma}{2 \sqrt{T}} \right) = -\infty$$
 Because the annualized time vector (T) sits inside a square root in the denominator, dividing any constant by a value approaching zero forces the limit to blow up to infinity.
 
 ### 2. The Trading Intuition
-An At-The-Money contract sits exactly on the strike price knife-edge. On its final trading session, its remaining extrinsic "time value" collapses completely in a matter of hours. The option's pricing distribution behaves like a delta function—the slightest tick dictates whether the contract expires fully preserved or completely worthless.
+An At-The-Money contract sits exactly on the strike price knife-edge. On its final trading session, its remaining extrinsic "time value" collapses completely in a matter of hours. The slightest tick dictates whether the contract expires fully preserved or completely worthless.
 
 ### 3. Data Engineering Resolution
 While mathematically accurate, this terminal infinity spike skews the vertical visual scale, flattening the critical trajectory details. To preserve chart readability, the Python visualization layer implements a data quality gate:
