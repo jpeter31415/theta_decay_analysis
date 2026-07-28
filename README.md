@@ -2,6 +2,12 @@
 
 A quantitative derivatives module designed to simulate the non-linear path of capital degradation (**Theta Time Decay**) for an At-The-Money (ATM) option contract for QQQ over its remaining lifespan. The engine uses an SQL query that joins option chains with stock prices to locate a valid near-term contract. It filters for an option with ~30 days left that is closest to being At-The-Money (ATM).
 
+## Technology Stack 
+*   **Language:** Python 3.10+ 
+*   **Database:** PostgreSQL 
+*   **Data Mapper:** SQLAlchemy 2.0 & Psycopg2 
+*   **Visual Analytics:** Matplotlib & Seaborn
+
 ## Methodology & Financial Calculus
 
 The engine solves the continuous partial derivative of the Black-Scholes-Merton (BSM) equation with respect to time (T):
